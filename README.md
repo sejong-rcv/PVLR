@@ -15,13 +15,14 @@
 # 🔨 Prerequisites
 
 ### Recommended Environment
-* OS : Ubuntu 18.04
-* CUDA : 10.2
-* Python 3.7.16
-* Pytorch 1.7.1 Torchvision 0.8.2
-* GPU : NVIDA-Tesla V100(32G)
+* We strongly recommend following the environment, which is very important as to whether it's reproduced or not.
+  * OS : Ubuntu 18.04
+  * CUDA : 10.2
+  * Python 3.7.16
+  * Pytorch 1.7.1 Torchvision 0.8.2
+  * GPU : NVIDA-Tesla V100(32G)
 
-Required packages are listed in **environment.yaml**. You can install by running:
+* Required packages are listed in **environment.yaml**. You can install by running:
 
 ```
 conda env create -f environment.yaml
@@ -33,3 +34,12 @@ conda activate PECR
    * [THUMOS'14]()
    * [ActivityNet1.2]()
 * Before running, Place the features inside a ```PECR/features``` folder.
+
+## 👍 References
+We referenced the repos below for the code.
+* [CLIP](https://github.com/openai/CLIP)
+* [CO2-Net](https://github.com/harlanhong/MM2021-CO2-Net)
+* [CoLA](https://github.com/zhang-can/CoLA)
+
+## ✉ Contact
+If you have any question or comment, please contact using the issue.
