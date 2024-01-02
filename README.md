@@ -1,4 +1,4 @@
-# 2024.Paper.PECR
+# PECR
 
 ### Official Pytorch Implementation of [Probabilistic Embedding with CLIP Representation for Weakly Supervised Temporal Action Localization]() (IEEE Access)
 
