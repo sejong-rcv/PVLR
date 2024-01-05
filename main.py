@@ -2,6 +2,7 @@ from __future__ import print_function
 import os
 import random
 import json
+import pickle
 import tarfile
 
 import numpy as np
@@ -78,7 +79,7 @@ def train(itr, dataset, args, model, optimizer, criterion, device):
    labels = torch.from_numpy(labels).float().to(device)
    clip_feature = torch.from_numpy(clip_feature).float().to(device)
    
-   outputs = model(features,clip_feature,itr=itr,split='train',device=device,opt=args) # TSM
+   outputs = model(features,clip_feature,itr=itr,split='train',device=device,opt=args) 
 
    loss, loss_dict = criterion(itr, outputs, clip_feature, labels)
 
@@ -87,7 +88,6 @@ def train(itr, dataset, args, model, optimizer, criterion, device):
    optimizer.step()
 
    return loss.data.cpu().numpy(), loss_dict
-
 
 @torch.no_grad()
 def test(itr, dataset, args, model, device):
@@ -110,7 +110,7 @@ def test(itr, dataset, args, model, device):
       with torch.no_grad():
          outputs = model(Variable(features), clip_feat, split='test', itr=itr)
          element_logits = outputs['cas']
-         results[vn] = {'cas':outputs['cas'], 'attn':outputs['attn']}
+         results[vn.decode('utf-8')] = {'cas':outputs['cas'], 'attn':outputs['attn']}
          proposals.append(getattr(PM, args.proposal_method)(args, vn, outputs, labels))
          logits=element_logits.squeeze(0)
 
@@ -182,11 +182,7 @@ if __name__ == '__main__':
 
    save_dir = f'output/ckpt/{args.model_name}'
    actionlist, actiondict, actiontoken = text_prompt(dataset=args.dataset_name, clipbackbone=args.backbone, device=device)
-   """
-   actionlist: action 클래스 리스트
-   actiondict: 클래스별 임베딩 1, 77, 512
-   actiontoken: 클래스별 토큰 1, 77
-   """
+
    TSM = wstal.TSM(actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
 
    if args.pretrained_ckpt is not None:
@@ -202,12 +198,6 @@ if __name__ == '__main__':
    for itr in tqdm(range(args.max_iter)):
       loss, loss_dict = train(itr, dataset, args, TSM ,optimizer, criterion, device)
       total_loss+=loss
-
-      # columns = [' ', 'cls_loss', 'norm_loss', 'guide_loss', 'contra_loss', 'distillation_loss', 'action_prob_contra_loss', 'background_prob_contra_loss', 'ortho_loss'] 
-      # performance = [itr, loss_dict['cls_loss'],loss_dict['norm_loss'],loss_dict['guide_loss'],loss_dict['contra_loss'],loss_dict['distillation_loss'],loss_dict['action_prob_contra_loss'],loss_dict['background_prob_contra_loss'],loss_dict['ortho_loss']]
-      # table = [performance]
-      # print(tabulate(table, headers=columns, numalign="center", stralign="center", tablefmt="simple", floatfmt='.2f'))
-      # print(tabulate(table, numalign="center", stralign="center", tablefmt="simple", floatfmt='.2f'), file=result_file, flush=True)
 
       if itr > args.warmup_iter and itr % args.interval == 0 and not itr == 0:  
          print('Iteration: %d, Loss: %.5f ' %(itr, total_loss/args.interval))

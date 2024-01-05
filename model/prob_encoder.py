@@ -5,10 +5,7 @@ class SnippetEncoder(nn.Module):
     """
     Build a PSRL network with: Beyesian dropout inference encoder
     """
-    def __init__(self, dim = 2048, prob = False, mu_size=None):
-        """
-        dim = feature dimension (default: 512)
-        """
+    def __init__(self, dim=2048, prob=False, mu_size=None):
         super(SnippetEncoder, self).__init__()
         self.prob = prob
         self.dim = dim
@@ -28,9 +25,9 @@ class SnippetEncoder(nn.Module):
         samples = torch.einsum('nbtd,btd->nbtd', [eps, torch.exp(.5*logsigma)]) 
         samples = samples.permute(1,0,2,3)
         samples = samples + mu.unsqueeze(1).repeat(1,num_samples,1,1)
-        return samples # [10, 5, 320, 2048]
+        return samples 
 
-    def forward(self, itr, f, clip_feat, num_samples): # flow: [10, 320, 1024]
+    def forward(self, itr, f, clip_feat, num_samples): 
         if self.prob == 1:
             f = f.permute((0, 2, 1))
             mu = self.fc_mean(f)

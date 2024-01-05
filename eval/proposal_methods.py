@@ -86,7 +86,6 @@ def multiple_threshold_hamnet(args, vid_name, data_dict, labels):
                                             args.feature_fps,
                                             num_segments,
                                             gamma=args.gamma_oic)
-        
         for j in range(len(proposals)):
             try:
                 class_id = proposals[j][0][0]

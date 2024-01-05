@@ -53,7 +53,7 @@ def text_prompt(dataset='Thumos14reduced', clipbackbone='R50', device='cpu'):
     # More datasets to be continued
     # query the vector from dictionary
     with torch.no_grad():
-        actionembed = clipmodel.encode_text_light(torch.tensor(actiontoken).to(device)) # [20, 1, 77, 512]
+        actionembed = clipmodel.encode_text_light(torch.tensor(actiontoken).to(device))
 
     actiondict = OrderedDict((actionlist[i], actionembed[i].cpu().data.numpy()) for i in range(numC[dataset]))
     actiontoken = OrderedDict((actionlist[i], actiontoken[i]) for i in range(numC[dataset]))

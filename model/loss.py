@@ -54,7 +54,7 @@ class VideoLoss(torch.nn.Module):
         n_tmp = 0.
         _, n, c = element_logits.shape
         
-        for i in range(0, 3*2, 2): # 0, 2, 4 왜 이렇게 하드 코딩 되어 있는거지? num_similar, similar_size 이거랑 관련 있나?
+        for i in range(0, 3*2, 2): 
             atn1 = F.softmax(element_logits[i], dim=0) # 0, 2, 4
             atn2 = F.softmax(element_logits[i+1], dim=0) # 1, 3, 5
 
@@ -176,6 +176,13 @@ class ProbLoss(torch.nn.Module):
         hard_bkg_var = self.select_topk_embeddings(aness_region_outer, var, k=self.k_hard)
 
         return (hard_act_mu, hard_act_var), (hard_bkg_mu, hard_bkg_var)
+    
+    def Euclidean_distance(self, mu_p, cov_p, mu_q, cov_q):
+
+        mu_dist = torch.mean(torch.mean(torch.cdist(mu_p,mu_q),dim=-1),dim=-1)
+        cov_dist = torch.mean(torch.mean(torch.cdist(cov_p,cov_q),dim=-1),dim=-1)
+
+        return mu_dist + cov_dist
 
     def KL_divergence(self, mu_p, cov_p, mu_q, cov_q):
         distance = []
@@ -240,6 +247,10 @@ class ProbLoss(torch.nn.Module):
         elif self.args.metric == 'Bhatta':
             pos_distance = self.Bhattacharyya_distance(hard_query[0],hard_query[1],easy_pos[0],easy_pos[1])
             neg_distance = self.Bhattacharyya_distance(hard_query[0],hard_query[1],easy_neg[0],easy_neg[1])
+
+        elif self.args.metric == 'Euclidean':
+            pos_distance = self.Euclidean_distance(hard_query[0],hard_query[1],easy_pos[0],easy_pos[1])
+            neg_distance = self.Euclidean_distance(hard_query[0],hard_query[1],easy_neg[0],easy_neg[1])
 
         loss = -1*(torch.log(pos_distance) + torch.log(1-neg_distance))
 

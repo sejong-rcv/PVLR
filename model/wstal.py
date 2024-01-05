@@ -17,7 +17,7 @@ class Attn(torch.nn.Module):
         embed_dim = 1024
 
         self.AE_e = nn.Sequential(
-            nn.Conv1d(n_feature, embed_dim//2, 3, padding=1),nn.LeakyReLU(0.2),nn.Dropout(0.5)) # 1024 -> 512
+            nn.Conv1d(n_feature, embed_dim//2, 3, padding=1),nn.LeakyReLU(0.2),nn.Dropout(0.5)) 
         
         self.AE_d = nn.Sequential(
             nn.Conv1d(embed_dim//2, n_feature, 3, padding=1),nn.LeakyReLU(0.2),nn.Dropout(0.5))
@@ -35,31 +35,41 @@ class Attn(torch.nn.Module):
         self.channel_avg=nn.AdaptiveAvgPool1d(1)
 
     def forward(self,vfeat,ffeat): 
-        fusion_feat = self.AE_e(ffeat) # [10, 512, 320]
-        new_feat = self.AE_d(fusion_feat) # [10, 1024, 320]
+        fusion_feat = self.AE_e(ffeat) 
+        new_feat = self.AE_d(fusion_feat) 
 
-        channelfeat = self.channel_avg(vfeat) # [10, 1024, 1], Temporal 평균
-        channel_attn = self.channel_conv(channelfeat) # b, 1024, 1 / visual feature로부터 channel attention 값 추출
+        channelfeat = self.channel_avg(vfeat) 
+        channel_attn = self.channel_conv(channelfeat) 
         channel_attn_norm = channel_attn/torch.norm(channel_attn,p=2,dim=1,keepdim=True) # normalize
 
-        bit_wise_attn = self.bit_wise_attn(fusion_feat) # b, 1024, 320
+        bit_wise_attn = self.bit_wise_attn(fusion_feat) 
         bit_wise_attn_norm = bit_wise_attn/torch.norm(bit_wise_attn,p=2,dim=1,keepdim=True)
 
-        temp_attn= torch.einsum('bdn,bdt->bnt',[channel_attn_norm, bit_wise_attn_norm]) # [10, 1, 320]
+        temp_attn= torch.einsum('bdn,bdt->bnt',[channel_attn_norm, bit_wise_attn_norm])
 
         filter_feat = torch.sigmoid(bit_wise_attn*temp_attn)*vfeat
         x_atn = self.attention(filter_feat)
         return x_atn, filter_feat, new_feat, vfeat
 
 class Similarity(nn.Module):
-    def __init__(self, sig_T):
+    def __init__(self, sig_T_train, sig_T_infer):
         super().__init__()
-        self.sig_T = sig_T
+        self.sig_T_train = sig_T_train
+        self.sig_T_infer = sig_T_infer
 
-    def forward(self, v_feat, t_feat): # [10, 320, 10, 2048], [21, 10, 2048]
+    def forward(self, v_feat, t_feat, split): 
+        
         b, n, t, d = v_feat.shape
         t_feat = t_feat.unsqueeze(0).unsqueeze(0).repeat(b, n, 1, 1)
-        dist = torch.einsum('bntd,bmcd->bctnm',[v_feat,t_feat]) / self.sig_T
+
+        if split == 'test':
+            tau = self.sig_T_infer
+            v_feat = torch.nn.functional.normalize(v_feat, dim=-1)
+            t_feat = torch.nn.functional.normalize(t_feat, dim=-1)
+        else:
+            tau = self.sig_T_train
+
+        dist = torch.einsum('bntd,bmcd->bctnm',[v_feat,t_feat]) / tau
         dist = torch.mean(torch.mean(dist,dim=-1),dim=-1)
         return dist
 
@@ -94,10 +104,12 @@ class TSM(torch.nn.Module):
         self.P_v = args['opt'].num_prob_v
         self.P_t = args['opt'].num_prob_t
         self.n_class = args['opt'].num_class
-        self.sig_T = args['opt'].sig_T
+
+        self.sig_T_train = args['opt'].sig_T_train
+        self.sig_T_infer = args['opt'].sig_T_infer
+
         self.prefix = args['opt'].prefix
         self.postfix = args['opt'].postfix
-
         """
         Prob. embedding
         """
@@ -106,11 +118,10 @@ class TSM(torch.nn.Module):
         Convert CLIP's text feature into form of distribution, but never use
         """
         self.text_prob_encoder = TextEncoder(2048, prob=True)
-
         """
         sim. calculation for CAS
         """
-        self.matching_prob = Similarity(sig_T=self.sig_T) 
+        self.matching_prob = Similarity(sig_T_train=self.sig_T_train, sig_T_infer=self.sig_T_infer) 
 
         self.clipmodel, _ = clip.load(args['opt'].backbone, device=self.device, jit=False) 
         
@@ -132,12 +143,12 @@ class TSM(torch.nn.Module):
         nn.init.normal_(self.embedding.weight, std=0.01)
 
     def replace_text_embedding(self, actionlist):
-        self.text_embedding = self.embedding(torch.arange(77).to(self.device))[None, :].repeat([len(actionlist)+1, 1, 1]) # [21, 77, 512]
-        self.prompt_actiontoken = torch.zeros(len(actionlist)+1, 77) # [21, 77]
+        self.text_embedding = self.embedding(torch.arange(77).to(self.device))[None, :].repeat([len(actionlist)+1, 1, 1]) 
+        self.prompt_actiontoken = torch.zeros(len(actionlist)+1, 77) 
         for i, a in enumerate(actionlist):
-            embedding = torch.from_numpy(self.actiondict[a][0]).float().to(self.device) # [77, 512]
+            embedding = torch.from_numpy(self.actiondict[a][0]).float().to(self.device) 
             token = torch.from_numpy(self.actiontoken[a][0])
-            self.text_embedding[i][0] = embedding[0] # [21, 77, 512]
+            self.text_embedding[i][0] = embedding[0] 
             ind = np.argmax(token, -1)
 
             self.text_embedding[i][self.prefix + 1: self.prefix + ind] = embedding[1:ind]
@@ -162,17 +173,14 @@ class TSM(torch.nn.Module):
         nfeat = torch.cat((vfeat,ffeat),1)
         
         nfeat_out0 = self.fusion(nfeat)
-        nfeat_out = self.fusion2(nfeat_out0) # b, 2048, T
+        nfeat_out = self.fusion2(nfeat_out0)
 
-        # Text embedding
         self.replace_text_embedding(self.inp_actionlist)
-        text_feature = self.clipmodel.encode_text(self.text_embedding, self.prompt_actiontoken) # [20, 77, dim], [20, 77] -> [20, dim]
+        text_feature = self.clipmodel.encode_text(self.text_embedding, self.prompt_actiontoken)
         text_feature = text_feature.to(torch.float32) 
 
-        ################# Probabilistic CAS #################
-        # convert fused feature into prob. feature
-        mu_v, emb_v, var_v = self.snippet_prob_encoder(itr, nfeat_out, clip_feat, self.P_v) # [10, 320, 2048], [10, 320, 10, 2048], [10, 320, 2048]
-        cas = self.matching_prob(emb_v, text_feature) # CAS [10, 320, 21] 
+        mu_v, emb_v, var_v = self.snippet_prob_encoder(itr, nfeat_out, clip_feat, self.P_v) 
+        cas = self.matching_prob(emb_v, text_feature, split)
     
         return {'feat':nfeat_out0.transpose(-1, -2),'text_feat':text_feature,'feat_final':nfeat_out.transpose(-1,-2), 'cas':cas.transpose(-1,-2), 'attn':x_atn.transpose(-1,-2), \
                 'v_atn':v_atn.transpose(-1, -2),'f_atn':f_atn.transpose(-1, -2),'n_rfeat':n_rfeat.transpose(-1,-2),'o_rfeat':o_rfeat.transpose(-1,-2), \

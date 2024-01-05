@@ -41,6 +41,7 @@ def segment_iou(target_segment, candidate_segments):
     tiou : 1d array
         Temporal intersection over union score of the N's candidate segments.
     """
+    
     tt1 = np.maximum(target_segment[0], candidate_segments[:, 0])
     tt2 = np.minimum(target_segment[1], candidate_segments[:, 1])
     # Intersection including Non-negative overlap score.

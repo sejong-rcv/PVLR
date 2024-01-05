@@ -73,8 +73,6 @@ def generate_single_ground_truth_file(annotation_path,args,subset,verbose,output
     gtlabels = gtlabels[idx_to_take]
     videoname = videoname[idx_to_take]
 
-
-
     # which categories have temporal labels ?
     templabelcategories = sorted(list(set([l for gtl in gtlabels for l in gtl])))
 

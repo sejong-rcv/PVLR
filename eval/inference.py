@@ -41,6 +41,7 @@ def setup_seed(seed):
 
 @torch.no_grad()
 def test(itr, dataset, args, model, device):
+
    model.eval()
    done = False
    instance_logits_stack = []
@@ -61,7 +62,7 @@ def test(itr, dataset, args, model, device):
          outputs = model(Variable(features), clip_feat, split='test', itr=itr)
          element_logits = outputs['cas']
          results[vn] = {'cas':outputs['cas'], 'attn':outputs['attn']}
-         proposals.append(getattr(PM, args.proposal_method)(args, vn, outputs, labels))
+         proposals.append(getattr(PM, args.proposal_method)(args, vn, outputs, labels)) # 여기 내부에서 int로 처리되는거 float으로 바꾸자
          logits=element_logits.squeeze(0)
 
       tmp = F.softmax(torch.mean(torch.topk(logits, k=int(np.ceil(len(features)/8)), dim=0)[0], dim=0), dim=0).cpu().data.numpy()

@@ -22,12 +22,8 @@ def str2ind(categoryname, classlist):
 def strlist2indlist(strlist, classlist):
     return [str2ind(s, classlist) for s in strlist]
 
-
-
 def sigmoid(x, eps=1e-10):
     return 1/(1+np.exp(-x) + eps)
-
-
 
 def smooth(v, order=2,lens=200):
     # return v
@@ -172,6 +168,7 @@ class ANETdetection(object):
                 t_start_lst.append(round(gtsegments[i][j][0]*25/16))
                 t_end_lst.append(round(gtsegments[i][j][1]*25/16))
                 label_lst.append(str2ind(gtlabels[i][j], self.classlist))
+        
         ground_truth = pd.DataFrame(
             {
                 "video-id": video_lst,
@@ -185,7 +182,6 @@ class ANETdetection(object):
 
     def get_topk_mean(self, x, k, axis=0):
         return np.mean(np.sort(x, axis=axis)[-int(k):, :], axis=0)
-
 
     def _get_vid_score(self, pred):
         # pred : (n, class)
