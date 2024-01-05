@@ -31,8 +31,8 @@ conda activate PECR
 
 ### Data Preparation
 * For convenience, we provide the features we used. You can find them here.
-   * [THUMOS'14]()
-   * [ActivityNet v1.2]()
+   * THUMOS'14 : [Google Drive]()
+   * ActivityNet v1.2 : [Google Drive]()
 * Before running, Place the features inside a ```PECR/features``` folder.
 
 ## 👍 References
