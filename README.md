@@ -40,6 +40,7 @@ We referenced the repos below for the code.
 * [CLIP](https://github.com/openai/CLIP)
 * [CO2-Net](https://github.com/harlanhong/MM2021-CO2-Net)
 * [CoLA](https://github.com/zhang-can/CoLA)
+* [Efficient-Prompt](https://github.com/ju-chen/Efficient-Prompt)
 
 ## ✉ Contact
 If you have any question or comment, please contact using the issue.
