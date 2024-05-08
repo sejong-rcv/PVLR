@@ -1,6 +1,6 @@
 # PECR
 
-### Official Pytorch Implementation of [Probabilistic Embedding with CLIP Representation for Weakly Supervised Temporal Action Localization]() (IEEE Access)
+### Official Pytorch Implementation of [Probabilistic Vision-Language Representation for Weakly Supervised Temporal Action Localization]() (MM 2024, Under Review)
 
 ---
 <img src="figure.png" width="1280">
