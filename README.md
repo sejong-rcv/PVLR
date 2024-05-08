@@ -20,7 +20,7 @@
   * CUDA : 10.2
   * Python 3.7.16
   * Pytorch 1.7.1 Torchvision 0.8.2
-  * GPU : NVIDA-Tesla V100(32G)
+  * GPU : NVIDA-Tesla V100 (32G)
 
 * Required packages are listed in **environment.yaml**. You can install by running:
 
