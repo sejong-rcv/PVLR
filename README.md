@@ -31,8 +31,28 @@ conda activate PVLR
 ### Data Preparation
 * For convenience, we provide the features we used. You can find them here.
    * THUMOS'14 : [Google Drive]()
-   * ActivityNet v1.2 : [Google Drive]()
-* Before running, Place the features inside a ```PECR/features``` folder.
+* The **feature** directory should be organized as follows:
+~~~~
+├── PVLR
+   ├── features
+      ├── Thumos14_CLIP
+      ├── Thumos14-Annotations
+      ├── Thumos14reduced
+      └── Thumos14reduced-Annotations
+~~~~
+* Considering the difficulty in achieving perfect reproducibility due to different model initializations depending on the experimental device (e.g., different GPU setup), we provide the initialized model parameters we used.
+
+* Please note that the parameters provided are the initial parameters before any training has been conducted.
+   * ckpt : [Google Drive]()
+
+* The **checkpoint file**  should be organized as follows:
+~~~~
+├── PVLR
+   ├── model
+      ├── ...
+      ├── ...
+      └── PVLR_init.pth
+~~~~
 
 ## Run
 
