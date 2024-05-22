@@ -28,7 +28,7 @@ class VideoLoss(torch.nn.Module):
         if lab_rand is not None:
             labels_with_back = torch.cat((labels, lab_rand), dim=-1)
         
-        topk_val, topk_ind = torch.topk(element_logits, k=max(1, int(element_logits.shape[-2] // rat)), dim=-2) # [10, 45, 21] 
+        topk_val, topk_ind = torch.topk(element_logits, k=max(1, int(element_logits.shape[-2] // rat)), dim=-2)
         instance_logits = torch.mean(topk_val, dim=-2)
 
         labels_with_back = labels_with_back / (torch.sum(labels_with_back, dim=1, keepdim=True) + 1e-4)
@@ -55,19 +55,19 @@ class VideoLoss(torch.nn.Module):
         _, n, c = element_logits.shape
         
         for i in range(0, 3*2, 2): 
-            atn1 = F.softmax(element_logits[i], dim=0) # 0, 2, 4
-            atn2 = F.softmax(element_logits[i+1], dim=0) # 1, 3, 5
+            atn1 = F.softmax(element_logits[i], dim=0) 
+            atn2 = F.softmax(element_logits[i+1], dim=0) 
 
             n1 = torch.FloatTensor([np.maximum(n-1, 1)]).cuda()
             n2 = torch.FloatTensor([np.maximum(n-1, 1)]).cuda()
 
-            Hf1 = torch.mm(torch.transpose(x[i], 1, 0), atn1)                                                   # (n_feature, n_class)
+            Hf1 = torch.mm(torch.transpose(x[i], 1, 0), atn1) 
             Hf2 = torch.mm(torch.transpose(x[i+1], 1, 0), atn2)
 
             Lf1 = torch.mm(torch.transpose(x[i], 1, 0), (1 - atn1)/n1)
             Lf2 = torch.mm(torch.transpose(x[i+1], 1, 0), (1 - atn2)/n2)
 
-            d1 = 1 - torch.sum(Hf1*Hf2, dim=0) / (torch.norm(Hf1, 2, dim=0) * torch.norm(Hf2, 2, dim=0))        # 1-similarity
+            d1 = 1 - torch.sum(Hf1*Hf2, dim=0) / (torch.norm(Hf1, 2, dim=0) * torch.norm(Hf2, 2, dim=0))
             d2 = 1 - torch.sum(Hf1*Lf2, dim=0) / (torch.norm(Hf1, 2, dim=0) * torch.norm(Lf2, 2, dim=0))
             d3 = 1 - torch.sum(Hf2*Lf1, dim=0) / (torch.norm(Hf2, 2, dim=0) * torch.norm(Lf1, 2, dim=0))
             
@@ -123,10 +123,6 @@ class ProbLoss(torch.nn.Module):
 
         self.M = args.M
         self.m = args.m
-        self.T = args.nce_T
-
-        self.shift = nn.Parameter(args.init_shift * torch.ones(1))
-        self.negative_scale = nn.Parameter(args.init_negative_scale * torch.ones(1))
 
     def select_topk_embeddings(self, scores, embeddings, k):
         _, idx_DESC = scores.sort(descending=True, dim=1)
@@ -196,6 +192,8 @@ class ProbLoss(torch.nn.Module):
                 dist = term1 + term2 + term3 - 0.5*mu_p.shape[2]
                 distance.append(1/(dist+1))
         distance = torch.stack(distance,dim=-1)
+        if mu_p.shape[1] == 1:
+            return distance
         return distance.mean(-1)
 
     def Bhattacharyya_distance(self, mu_p, cov_p, mu_q, cov_q): 
@@ -221,28 +219,14 @@ class ProbLoss(torch.nn.Module):
         distance = torch.stack(distance, dim=-1)
         return distance.mean(-1)
 
-    def NCE(self, q, k, neg, T=0.07):
-        q = torch.nn.functional.normalize(q, dim=1)
-        k = torch.nn.functional.normalize(k, dim=1)
-        neg = neg.permute(0,2,1)
-        neg = torch.nn.functional.normalize(neg, dim=1)
-        l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
-        l_neg = torch.einsum('nc,nck->nk', [q, neg])
-        logits = torch.cat([l_pos, l_neg], dim=1)
-        logits /= T
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).cuda()
-        loss = self.ce_criterion(logits, labels)
-
-        return loss
-
-    def ProbabilsticContrastive(self, hard_query, easy_pos, easy_neg):
+    def Intra_ProbabilsticContrastive(self, hard_query, easy_pos, easy_neg):
         if self.args.metric == 'Mahala':
             pos_distance = self.Mahalanobis_distance(hard_query[0],hard_query[1],easy_pos[0],easy_pos[1])
             neg_distance = self.Mahalanobis_distance(hard_query[0],hard_query[1],easy_neg[0],easy_neg[1])
 
         elif self.args.metric == 'KL_div':
-            pos_distance = self.KL_divergence(hard_query[0],hard_query[1],easy_pos[0],easy_pos[1])
-            neg_distance = self.KL_divergence(hard_query[0],hard_query[1],easy_neg[0],easy_neg[1])
+            pos_distance = 0.5*(self.KL_divergence(hard_query[0],hard_query[1],easy_pos[0],easy_pos[1]) + self.KL_divergence(easy_pos[0],easy_pos[1], hard_query[0],hard_query[1]))
+            neg_distance = 0.5*(self.KL_divergence(hard_query[0],hard_query[1],easy_neg[0],easy_neg[1]) + self.KL_divergence(easy_neg[0],easy_neg[1],hard_query[0],hard_query[1]))
 
         elif self.args.metric == 'Bhatta':
             pos_distance = self.Bhattacharyya_distance(hard_query[0],hard_query[1],easy_pos[0],easy_pos[1])
@@ -252,14 +236,65 @@ class ProbLoss(torch.nn.Module):
             pos_distance = self.Euclidean_distance(hard_query[0],hard_query[1],easy_pos[0],easy_pos[1])
             neg_distance = self.Euclidean_distance(hard_query[0],hard_query[1],easy_neg[0],easy_neg[1])
 
-        loss = -1*(torch.log(pos_distance) + torch.log(1-neg_distance))
+        if self.args.loss_type == 'frobenius':
+            loss = torch.norm(1-pos_distance) + torch.norm(neg_distance)
+            return loss
+        
+        elif self.args.loss_type == 'neg_log':
+            loss = -1*(torch.log(pos_distance) + torch.log(1-neg_distance))
+            return loss.mean()
 
-        return loss.mean()
+    def Inter_ProbabilsticContrastive(self, attn, mu, var, labels):
 
+        (b,t,d) = mu.shape
+        device = mu.device
+
+        label = labels@(labels.transpose(0, 1))
+        label[torch.where(label>=1)] = 1
+
+        wtsum = torch.einsum('btn,btd->btd',[attn, mu])
+        mu_gmm = torch.mean(wtsum, dim=1) 
+
+        if self.args.metric_vid == 'cos':
+            mu_gmm = torch.nn.functional.normalize(mu_gmm,dim=-1) 
+            self_prob = torch.mm(mu_gmm, mu_gmm.transpose(0, 1))
+            self_prob = ((self_prob + 1) / 2)
+
+        elif self.args.metric_vid == 'KL_div':
+            
+            if self.args.var_type =='naive_weighted':
+                wtsum = torch.einsum('btn,btd->btd',[attn, var])
+                var_gmm = torch.mean(wtsum, dim=1) 
+
+            elif self.args.var_type =='definition':
+                wtsum = torch.einsum('btn,btd->btd',[attn, torch.pow(mu,2) + var])
+                var_gmm = torch.mean(wtsum, dim=1) - torch.pow(mu_gmm,2)
+                
+            self_prob = torch.zeros(b,b).to(device)
+
+            var_gmm = var_gmm + 1e-5
+
+            for i in range(b):
+                for j in range(b):
+                    term1 = 0.5*torch.einsum('d,d,d',[(mu_gmm[j,:]-mu_gmm[i,:]), 1/var_gmm[j,:], (mu_gmm[j,:]-mu_gmm[i,:])])
+                    term2 = 0.5*(torch.log(var_gmm[j,:]).sum(-1) - torch.log(var_gmm[i,:]).sum(-1))
+                    term3 = 0.5*((var_gmm[i,:]/var_gmm[j,:]).sum(-1))
+                    dist = term1 + term2 + term3 - d/2
+
+                    self_prob[i][j] = 1/(dist+1)
+
+        if self.args.loss_type == 'frobenius':
+            loss = torch.norm(label-self_prob, p='fro')
+
+        elif self.args.loss_type == 'neg_log':
+            loss = -1*torch.log(self_prob[label==1]).mean() + -1*torch.log(1-self_prob[label==0]).mean()
+
+        return loss
+                 
     def Distillation(self, mu, clip_feat):
         mu = torch.nn.functional.normalize(mu,dim=-1)
         clip_feat = torch.nn.functional.normalize(clip_feat,dim=-1)
-        sim = torch.einsum('btd,btd->bt',[mu,clip_feat])
+        sim = torch.einsum('btd,btd->bt',[mu, clip_feat])
         sim = (sim + 1) / 2
         return -torch.log(sim.mean())
     
@@ -271,17 +306,22 @@ class ProbLoss(torch.nn.Module):
     
     def forward(self, iter, data, mu_clip, labels):
 
+        self_label = torch.zeros((labels.shape[0],labels.shape[0]))
+        self_label[labels @ labels.T>0]=1
+
         attn, mu, var, category_emb = data['attn'], data['mu_v'], data['var_v'], data['text_feat']
 
         easy_act, easy_bkg = self.easy_snippets_mining(attn, mu, var)
         hard_act, hard_bkg = self.hard_snippets_mining(attn, mu, var)
         
         distillation_loss = self.args.alpha4 * self.Distillation(mu, mu_clip)
-        action_prob_contra_loss = self.args.alpha5 * self.ProbabilsticContrastive(hard_act, easy_act, easy_bkg)
-        background_prob_contra_loss = self.args.alpha6 * self.ProbabilsticContrastive(hard_bkg, easy_bkg, easy_act)
-        ortho_loss = self.args.alpha7 * self.orthogonalization(category_emb)
+        action_prob_contra_loss = self.args.alpha5 * self.Intra_ProbabilsticContrastive(hard_act, easy_act, easy_bkg)
+        background_prob_contra_loss = self.args.alpha6 * self.Intra_ProbabilsticContrastive(hard_bkg, easy_bkg, easy_act)
+        action_prob_vid_contra_loss = self.args.alpha7 * self.Inter_ProbabilsticContrastive(attn, mu, var, labels)
+        ortho_loss = self.args.alpha8 * self.orthogonalization(category_emb)
 
-        return distillation_loss + action_prob_contra_loss + background_prob_contra_loss + ortho_loss, (distillation_loss, action_prob_contra_loss, background_prob_contra_loss, ortho_loss)
+        return distillation_loss + action_prob_contra_loss + background_prob_contra_loss + action_prob_vid_contra_loss + ortho_loss, \
+              (distillation_loss, action_prob_contra_loss, background_prob_contra_loss, action_prob_vid_contra_loss, ortho_loss)
 
 class TotalLoss(torch.nn.Module):
     def __init__(self, args):
@@ -292,6 +332,8 @@ class TotalLoss(torch.nn.Module):
 
     def forward(self, iter, outputs, clip_feature, labels):
         video_loss, (cls_loss, norm_loss, guide_loss, contra_loss) = self.video_criterion(outputs, labels)
-        prob_loss, (distillation_loss, action_prob_contra_loss, background_prob_contra_loss, ortho_loss) = self.prob_criterion(iter, outputs, clip_feature, labels)
+        prob_loss, (distillation_loss, action_prob_contra_loss, background_prob_contra_loss, action_prob_vid_contra_loss, ortho_loss) = self.prob_criterion(iter, outputs, clip_feature, labels)
 
-        return video_loss + prob_loss, {"cls_loss":cls_loss, "norm_loss":norm_loss, "guide_loss":guide_loss, "contra_loss":contra_loss, "distillation_loss":distillation_loss, "action_prob_contra_loss":action_prob_contra_loss, "background_prob_contra_loss":background_prob_contra_loss, "ortho_loss":ortho_loss}
+        return video_loss + prob_loss, {"cls_loss":cls_loss, "norm_loss":norm_loss, "guide_loss":guide_loss, "contra_loss":contra_loss, \
+        "distillation_loss":distillation_loss, "action_prob_contra_loss":action_prob_contra_loss, "background_prob_contra_loss":background_prob_contra_loss, \
+        "action_prob_vid_contra_loss":action_prob_vid_contra_loss, "ortho_loss":ortho_loss}

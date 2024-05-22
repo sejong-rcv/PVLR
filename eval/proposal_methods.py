@@ -81,11 +81,12 @@ def multiple_threshold_hamnet(args, vid_name, data_dict, labels):
                                             cas_temp,
                                             pred_vid_score,
                                             pred,
-                                            args.scale,
+                                            args.cas_scale,
                                             num_segments,
                                             args.feature_fps,
                                             num_segments,
-                                            gamma=args.gamma_oic)
+                                            gamma=args.cas_gamma_oic,
+                                            lambda_=args.cas_lambda_)
         for j in range(len(proposals)):
             try:
                 class_id = proposals[j][0][0]
@@ -111,11 +112,12 @@ def multiple_threshold_hamnet(args, vid_name, data_dict, labels):
                                             cas_temp,
                                             pred_vid_score,
                                             pred,
-                                            args.scale,
+                                            args.act_scale,
                                             num_segments,
                                             args.feature_fps,
                                             num_segments,
-                                            gamma=args.gamma_oic)
+                                            gamma=args.act_gamma_oic,
+                                            lambda_=args.act_lambda_)
         
         for j in range(len(proposals)):
             try:

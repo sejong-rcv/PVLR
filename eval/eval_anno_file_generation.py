@@ -8,7 +8,6 @@ import pandas as pd
 def str2ind(categoryname, classlist):
     return [i for i in range(len(classlist)) if categoryname == classlist[i]][0]
 
-
 def strlist2indlist(strlist, classlist):
     return [str2ind(s, classlist) for s in strlist]
 
@@ -42,7 +41,6 @@ def generate_single_ground_truth_file(annotation_path,args,subset,verbose,output
     4. ground_truth
     5. activity_index
     '''
-
     gtsegments = np.load(annotation_path + "/segments.npy", allow_pickle=True)
     gtlabels = np.load(annotation_path + "/labels.npy", allow_pickle=True)
     videoname = np.load(annotation_path + "/videoname.npy", allow_pickle=True)
@@ -80,7 +78,6 @@ def generate_single_ground_truth_file(annotation_path,args,subset,verbose,output
     templabelidx = []
     for t in templabelcategories:
         templabelidx.append(str2ind(t, classlist))
-
 
     video_lst, t_start_lst, t_end_lst, label_lst = [], [], [], []
 

@@ -1,4 +1,4 @@
-name: wstal
+name: PVLR
 channels:
   - defaults
 dependencies:
@@ -76,4 +76,4 @@ dependencies:
       - urllib3==2.0.7
       - werkzeug==2.2.3
       - zipp==3.15.0
-prefix: /usr/local/envs/wstal
+prefix: /usr/local/envs/PVLR

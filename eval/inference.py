@@ -20,12 +20,16 @@ import scipy.io as sio
 import multiprocessing as mp
 from tabulate import tabulate
 
-import wsad_dataset
+import dataset
 import options
 import model
 from model.prompt import text_prompt
 from model import wstal
 import proposal_methods as PM
+
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+
 
 torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
@@ -41,9 +45,10 @@ def setup_seed(seed):
 
 @torch.no_grad()
 def test(itr, dataset, args, model, device):
-
    model.eval()
    done = False
+   X_gmm = []
+   y_gmm = []
    instance_logits_stack = []
    labels_stack = []
    proposals = []
@@ -59,10 +64,9 @@ def test(itr, dataset, args, model, device):
       clip_feat = torch.from_numpy(clip_feature).float().to(device).unsqueeze(0)
 
       with torch.no_grad():
-         outputs = model(Variable(features), clip_feat, split='test', itr=itr)
+         outputs = model(Variable(features), clip_feat, split='test', itr=itr, opt=args)
          element_logits = outputs['cas']
-         results[vn] = {'cas':outputs['cas'], 'attn':outputs['attn']}
-         proposals.append(getattr(PM, args.proposal_method)(args, vn, outputs, labels)) # 여기 내부에서 int로 처리되는거 float으로 바꾸자
+         proposals.append(getattr(PM, args.proposal_method)(args, vn, outputs, labels)) 
          logits=element_logits.squeeze(0)
 
       tmp = F.softmax(torch.mean(torch.topk(logits, k=int(np.ceil(len(features)/8)), dim=0)[0], dim=0), dim=0).cpu().data.numpy()
@@ -72,7 +76,6 @@ def test(itr, dataset, args, model, device):
    instance_logits_stack = np.array(instance_logits_stack)
    labels_stack = np.array(labels_stack)
    proposals = pd.concat(proposals).reset_index(drop=True)
-   proposals.to_csv("best_proposals.csv",index=False)
 
    #CVPR2020
    if 'Thumos14' in args.dataset_name:
@@ -96,7 +99,6 @@ def test(itr, dataset, args, model, device):
    cmap = cmAP(instance_logits_stack, labels_stack)
    print('Classification map %f' %cmap)
    return iou,dmap,dap
-
 
 if __name__ == '__main__':
     classes = {
@@ -128,9 +130,12 @@ if __name__ == '__main__':
 
     seed=args.seed
     setup_seed(seed)
-    result_file = open('./eval/abl_result.txt','a')
 
-    dataset = getattr(wsad_dataset, args.dataset)(args)
+    if os.path.isdir(os.path.join("output","log_inference",args.model_name)) == False:
+       os.mkdir(os.path.join("output","log_inference",args.model_name))
+    result_file = open(os.path.join("output","log_inference",args.model_name,'Performance.txt'),'w')
+
+    dataset = getattr(dataset, args.dataset)(args)
     actionlist, actiondict, actiontoken = text_prompt(dataset=args.dataset_name, clipbackbone=args.backbone, device=device)
     TSM = wstal.TSM(actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
 

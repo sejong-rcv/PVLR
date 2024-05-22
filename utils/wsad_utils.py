@@ -49,14 +49,6 @@ def idx2multihot(id_list, num_class):
 
 
 def random_extract(feat, t_max):
-    # ind = np.arange(feat.shape[0])
-    # splits = np.array_split(ind, t_max)
-    # nind = np.array([np.random.choice(split, 1)[0] for split in splits])
-    # return feat[nind]
-
-    # ind = np.random.choice(feat.shape[0], size=t_max)
-    # ind = sorted(ind)
-    # return feat[ind]
     r = np.random.randint(len(feat) - t_max)
     return feat[r: r + t_max]
 
@@ -93,7 +85,6 @@ def process_feat(feat, length=None, normalize=False):
 def write_to_file(dname, dmap, cmap, itr):
     fid = open(dname + "-results.log", "a+")
     string_to_write = str(itr)
-    # if dmap:
     for item in dmap:
         string_to_write += " " + "%.2f" % item
     string_to_write += " " + "%.2f" % cmap
@@ -183,12 +174,11 @@ def nms(proposals, thresh):
 
         iou = inter / (areas[i] + areas[order[1:]] - inter)
 
-        inds = np.where(iou < thresh)[0] #取出不重叠的
+        inds = np.where(iou < thresh)[0] 
         order = order[inds + 1]
 
     return keep
 def get_proposal_oic(tList, wtcam, final_score, c_pred, _lambda=0.25, gamma=0.2):
-    # t_factor = (16 * v_len) / (scale * num_segments * sampling_frames)  #（24*N*25）
     temp = []
     for i in range(len(tList)):
         c_temp = []
@@ -231,6 +221,7 @@ def get_proposal_oic_2(tList,
                      lambda_=0.25,
                      gamma=0.2,
                      loss_type="oic"):
+    
     t_factor = (16 * v_len) / (scale * num_segments * sampling_frames)
     temp = []
     for i in range(len(tList)):
@@ -240,14 +231,9 @@ def get_proposal_oic_2(tList,
             grouped_temp_list = grouping(temp_list)
             for j in range(len(grouped_temp_list)):
                 inner_score = np.mean(wtcam[grouped_temp_list[j], i, 0])
-
                 len_proposal = len(grouped_temp_list[j])
-                outer_s = max(
-                    0, int(grouped_temp_list[j][0] - lambda_ * len_proposal))
-                outer_e = min(
-                    int(wtcam.shape[0] - 1),
-                    int(grouped_temp_list[j][-1] + lambda_ * len_proposal),
-                )
+                outer_s = max(0, int(grouped_temp_list[j][0] - lambda_ * len_proposal))
+                outer_e = min(int(wtcam.shape[0] - 1), int(grouped_temp_list[j][-1] + lambda_ * len_proposal))
 
                 outer_temp_list = list(
                     range(outer_s, int(grouped_temp_list[j][0]))) + list(
@@ -259,10 +245,10 @@ def get_proposal_oic_2(tList,
                     outer_score = np.mean(wtcam[outer_temp_list, i, 0])
 
                 if loss_type == "oic":
-                    c_score = inner_score - outer_score + gamma * final_score[
-                        c_pred[i]]
+                    c_score = inner_score - outer_score + gamma * final_score[c_pred[i]]
                 else:
                     c_score = inner_score
+                    
                 t_start = grouped_temp_list[j][0]
                 t_end = (grouped_temp_list[j][-1] + 1)
                 c_temp.append([c_pred[i], c_score, t_start, t_end])

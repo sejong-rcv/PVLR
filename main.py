@@ -16,7 +16,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 import options
-import wsad_dataset
+import dataset
 
 from model.prompt import text_prompt
 from model.loss import TotalLoss
@@ -79,7 +79,7 @@ def train(itr, dataset, args, model, optimizer, criterion, device):
    labels = torch.from_numpy(labels).float().to(device)
    clip_feature = torch.from_numpy(clip_feature).float().to(device)
    
-   outputs = model(features,clip_feature,itr=itr,split='train',device=device,opt=args) 
+   outputs = model(features,clip_feature,itr=itr,split='train',device=device,opt=args)
 
    loss, loss_dict = criterion(itr, outputs, clip_feature, labels)
 
@@ -91,6 +91,10 @@ def train(itr, dataset, args, model, optimizer, criterion, device):
 
 @torch.no_grad()
 def test(itr, dataset, args, model, device):
+
+   if os.path.isdir(os.path.join("output","results",args.model_name))==False:
+      os.mkdir(os.path.join("output","results",args.model_name))
+
    model.eval()
    done = False
    instance_logits_stack = []
@@ -108,9 +112,15 @@ def test(itr, dataset, args, model, device):
       clip_feat = torch.from_numpy(clip_feature).float().to(device).unsqueeze(0)
 
       with torch.no_grad():
-         outputs = model(Variable(features), clip_feat, split='test', itr=itr)
+         outputs = model(Variable(features), clip_feat, split='test', itr=itr, opt=args)
          element_logits = outputs['cas']
-         results[vn.decode('utf-8')] = {'cas':outputs['cas'], 'attn':outputs['attn']}
+
+         results[vn.decode('utf-8')] = {'cas':outputs['cas'].detach().cpu().numpy(), 
+                                       'attn':outputs['attn'].detach().cpu().numpy(),
+                                       'reparam_sim':outputs['reparm_sim'].detach().cpu().numpy(),
+                                       'distill_sim':outputs['distill_sim'].detach().cpu().numpy() 
+                                       }
+
          proposals.append(getattr(PM, args.proposal_method)(args, vn, outputs, labels))
          logits=element_logits.squeeze(0)
 
@@ -118,11 +128,11 @@ def test(itr, dataset, args, model, device):
       instance_logits_stack.append(tmp)
       labels_stack.append(labels)
 
+
    instance_logits_stack = np.array(instance_logits_stack)
    labels_stack = np.array(labels_stack)
    proposals = pd.concat(proposals).reset_index(drop=True)
    
-   #CVPR2020
    if 'Thumos14' in args.dataset_name:
       iou = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
       dmap_detect = ANETdetection(dataset.path_to_annotations, iou, args=args)
@@ -142,6 +152,14 @@ def test(itr, dataset, args, model, device):
 
    cmap = cmAP(instance_logits_stack, labels_stack)
    print('Classification map %f' %cmap)
+
+   results['cmap'] = cmap
+   results['dmap'] = dmap
+   results['dap'] = dap
+
+   with open(os.path.join("output","results",args.model_name,f"iter_{itr}_results.pkl"), 'wb') as f:
+      pickle.dump(results, f, protocol=pickle.HIGHEST_PROTOCOL)
+
    return iou,dmap,dap
 
 if __name__ == '__main__':
@@ -160,14 +178,8 @@ if __name__ == '__main__':
    with open(os.path.join(result_path, 'opts.json'), 'w') as j:
       json.dump(args_dict, j, indent=2)
 
-   # # Current code save
-   # tar = tarfile.open(os.path.join(result_path, 'sources.tar'), 'w')
-   # tar.add('main.py'); tar.add('train.py'); tar.add('test.py'); tar.add('model.py'); tar.add(f'experiments/{args.model_name}.sh')
-   # tar.add('options.py'); tar.add('prob_encoder.py'); tar.add('proposal_methods.py'); tar.add('wsad_dataset.py')
-   # tar.close()
-
    device = torch.device("cuda")
-   dataset = getattr(wsad_dataset, args.dataset)(args)
+   dataset = getattr(dataset, args.dataset)(args)
 
    if 'Thumos' in args.dataset_name:
       max_map=[0]*9
@@ -182,11 +194,17 @@ if __name__ == '__main__':
 
    save_dir = f'output/ckpt/{args.model_name}'
    actionlist, actiondict, actiontoken = text_prompt(dataset=args.dataset_name, clipbackbone=args.backbone, device=device)
-
    TSM = wstal.TSM(actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
 
    if args.pretrained_ckpt is not None:
-      TSM.load_state_dict(torch.load(args.pretrained_ckpt))
+      previous_model = torch.load(args.pretrained_ckpt)
+      wts = ["fc_clip.weight", "fc_clip.bias", "text_prob_encoder.fc_mean.weight", "text_prob_encoder.fc_mean.bias", \
+             "text_prob_encoder.fc_var.weight", "text_prob_encoder.fc_var.bias", "text_prob_encoder.layer_norm.weight", \
+             "text_prob_encoder.layer_norm.bias", "snippet_prob_encoder.layer_norm.weight", "snippet_prob_encoder.layer_norm.bias"]
+      for wt in wts:
+         del previous_model[wt]
+      TSM.load_state_dict(previous_model)
+      print("Original ckpt loaded !!!")
 
    optimizer = optim.Adam([{"params": TSM.parameters()}], lr=args.lr, weight_decay=args.weight_decay)
    criterion = TotalLoss(args)

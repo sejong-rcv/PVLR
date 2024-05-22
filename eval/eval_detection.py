@@ -18,7 +18,6 @@ import pdb
 def str2ind(categoryname, classlist):
     return [i for i in range(len(classlist)) if categoryname == classlist[i]][0]
 
-
 def strlist2indlist(strlist, classlist):
     return [str2ind(s, classlist) for s in strlist]
 
@@ -73,9 +72,6 @@ def moving_smooth(y,box_size):
     return y_smooth
 
 def gaussian_smooth(score,sigma=30):
-    # r = score.shape[0] //39
-    # if r%2==0:
-    #     r+=1
     r = 125
     if r > score.shape[0] // 2:
         r = score.shape[0] // 2 - 1
@@ -109,11 +105,9 @@ class ANETdetection(object):
         self.tiou_thresholds = tiou_thresholds
         self.verbose = verbose
         self.ap = None
-        self.annotation_path = 'features/Thumos14reduced-Annotations'#os.path.join(args.path_dataset,annotation_path)
+        self.annotation_path = 'features/Thumos14reduced-Annotations'
         self.prediction = None
         self._import_ground_truth(self.annotation_path)
-
-        #####
 
     def _import_ground_truth(self, annotation_path):
         gtsegments = np.load(annotation_path + "/segments.npy", allow_pickle=True)

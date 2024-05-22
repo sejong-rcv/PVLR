@@ -45,12 +45,9 @@ def text_prompt(dataset='Thumos14reduced', clipbackbone='R50', device='cpu'):
     if dataset == 'Thumos14reduced':
         meta = np.load("features/Thumos14reduced-Annotations/classlist.npy", 'r')
         actionlist = [classes[act.decode('utf-8')] for act in meta]
-        # actionlist = meta.readlines()
-        # meta.close()
         actionlist = np.array([a.split('\n')[0] for a in actionlist])
         actiontoken = np.array([convert_to_token(a) for a in actionlist])
 
-    # More datasets to be continued
     # query the vector from dictionary
     with torch.no_grad():
         actionembed = clipmodel.encode_text_light(torch.tensor(actiontoken).to(device))

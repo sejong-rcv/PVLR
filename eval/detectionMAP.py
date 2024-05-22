@@ -13,10 +13,6 @@ def str2ind(categoryname,classlist):
 
 def smooth(v):
    return v
-   #l = min(351, len(v)); l = l - (1-l%2)
-   #if len(v) <= 3:
-   #   return v
-   #return savgol_filter(v, l, 1) #savgol_filter(v, l, 1) #0.5*(np.concatenate([v[1:],v[-1:]],axis=0) + v)
 
 def filter_segments(segment_predict, videonames, ambilist, factor):
    ind = np.zeros(np.shape(segment_predict)[0])
@@ -71,7 +67,6 @@ def getLocMAP(predictions, th, annotation_path, args):
    videoname = vn
    duration = dn
 
-
    # keep ground truth and predictions for instances with temporal annotations
    gts, gtl, vn, pred, dn = [], [], [], [], []
    for i, s in enumerate(gtsegments):
@@ -86,7 +81,7 @@ def getLocMAP(predictions, th, annotation_path, args):
    videoname = vn
    predictions = pred
 
-   # which categories have temporal labels ?
+   # which categories have temporal labels?
    templabelcategories = sorted(list(set([l for gtl in gtlabels for l in gtl])))
 
    # the number index for those categories.
@@ -313,10 +308,6 @@ def getDetectionMAP(predictions, annotation_path, args,pool):
       func = AntgetLocMAP
    results = [pool.apply_async(getLocMAP, args=(predictions, iou, annotation_path, args)) for iou in iou_list]
    dmap_list = [p.get() for p in results]
-   # for iou in iou_list:
-   #    print('Testing for IoU %f' %iou)
-   #    dmap_list.append(func(predictions, iou, annotation_path, args))
-
 
    return dmap_list, iou_list
 
