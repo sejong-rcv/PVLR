@@ -12,7 +12,7 @@
 > **Abstract:** *Weakly supervised temporal action localization (WTAL) aims to detect action instances in untrimmed videos with only video-level annotations. As many existing works optimizeWTAL models based on action classification labels, they encounter the task discrepancy problem (i.e., localization-by-classification). To tackle this issue, recent studies have attempted to utilize action category names as auxiliary semantic knowledge with vision-language pre-training (VLP). However, there are still areas where existing research falls short. Previous approaches primarily focused on leveraging textual information from language models but overlooked the alignment of dynamic human action and VLP knowledge in joint space. Furthermore, the deterministic representation employed in previous studies struggles to capture fine-grained human motion. To address these problems, we propose a novel framework that aligns human action knowledge and VLP knowledge in the probabilistic embedding space. Moreover, we propose intra- and inter-distribution contrastive learning to enhance the probabilistic embedding space based on statistical similarities. Extensive experiments and ablation studies reveal that our method significantly outperforms all previous state-of-the-art methods.*
 
 
-# 🔨 Prerequisites
+## Prerequisites
 
 ### Recommended Environment
 * We strongly recommend following the environment, which is very important as to whether it's reproduced or not.
@@ -28,14 +28,24 @@
 conda env create -f environment.yaml
 conda activate PVLR
 ```
-
 ### Data Preparation
 * For convenience, we provide the features we used. You can find them here.
    * THUMOS'14 : [Google Drive]()
    * ActivityNet v1.2 : [Google Drive]()
 * Before running, Place the features inside a ```PECR/features``` folder.
 
-## 👍 References
+## Run
+
+### Training
+```
+OMP_NUM_THREADS=1 CUDA_VISIBLE_DEVICES=0 python main.py --model-name PVLR
+```
+
+### Inference
+```
+OMP_NUM_THREADS=1 CUDA_VISIBLE_DEVICES=0 python eval/inference.py --pretrained-ckpt output/ckpt/PVLR/Best_model.pkl
+```
+## References
 We referenced the repos below for the code.
 * [CLIP](https://github.com/openai/CLIP)
 * [CO2-Net](https://github.com/harlanhong/MM2021-CO2-Net)
