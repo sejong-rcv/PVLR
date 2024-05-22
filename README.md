@@ -26,7 +26,7 @@
 
 ```
 conda env create -f environment.yaml
-conda activate PECR
+conda activate PVLR
 ```
 
 ### Data Preparation
