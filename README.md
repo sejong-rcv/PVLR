@@ -1,11 +1,11 @@
-# PECR
+# PVLR
 
-### Official Pytorch Implementation of [Probabilistic Vision-Language Representation for Weakly Supervised Temporal Action Localization]() (MM 2024, Under Review)
+### Official Pytorch Implementation of [Probabilistic Vision-Language Representation for Weakly Supervised Temporal Action Localization]() 
 
 ---
 <img src="fig/figure2_framework.png" width="1280">
 
-> **Probabilistic Embedding with CLIP Representation for Weakly Supervised Temporal Action Localization**<br>
+> **Probabilistic Vision-Language Representation for Weakly Supervised Temporal Action Localization**<br>
 > Geuntaek Lim (Sejong Univ.), Hyunwoo Kim (Sejong Univ.), Joonsoo Kim (ETRI), and Yukyung Choi (Sejong Univ.)
 >
 >
