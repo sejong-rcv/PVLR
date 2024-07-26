@@ -1,7 +1,6 @@
 # PVLR
 
-### Official Pytorch Implementation of [Probabilistic Vision-Language Representation for Weakly Supervised Temporal Action Localization]() 
-
+### Official Pytorch Implementation of [Probabilistic Vision-Language Representation for Weakly Supervised Temporal Action Localization]()  (ACM MM 2024)
 ---
 <img src="fig/figure2_framework.png" width="1280">
 
