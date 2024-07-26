@@ -50,7 +50,7 @@ conda activate PVLR
 
 * Please note that the parameters provided are the initial parameters before any training has been conducted.
    * ckpt (thumos) : [Google Drive](https://drive.google.com/file/d/1eQsucNql6e9dR1LKd1vyxJZ5-HCc-bcB/view?usp=sharing)
-   * ckpt (annet) : [Google Drive]()
+   * ckpt (annet) : [Google Drive](https://drive.google.com/file/d/1TzFzJL4k3odpYYwm9sx2iQN--oaf_x5B/view?usp=drive_link)
 
 * The **checkpoint file**  should be organized as follows:
 ~~~~
