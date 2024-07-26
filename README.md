@@ -30,8 +30,8 @@ conda activate PVLR
 
 ### Data Preparation
 * For convenience, we provide the features we used. You can find them here.
-   * Thumos : [Google Drive](https://drive.google.com/file/d/19eFwdOFe-esSfv9D_BpHMJtZnpJib_Nw/view?usp=drive_link)
-   * Annet : [Google Drive](https://drive.google.com/file/d/19eFwdOFe-esSfv9D_BpHMJtZnpJib_Nw/view?usp=drive_link)
+   * Thumos : [Google Drive](https://drive.google.com/file/d/1o8Jx0joiL9fO9Um3T-qu9SAi_fX5MpPV/view?usp=sharing)
+   * Annet : [Google Drive](https://drive.google.com/file/d/1M9BWg3Jx17Jf7JsxQs_FvLQ23pxtkja7/view?usp=sharing)
 * The **feature** directory should be organized as follows:
 ~~~~
 ├── PVLR
@@ -49,8 +49,8 @@ conda activate PVLR
 * Considering the difficulty in achieving perfect reproducibility due to different model initializations depending on the experimental device (e.g., different GPU setup), we provide the initialized model parameters we used.
 
 * Please note that the parameters provided are the initial parameters before any training has been conducted.
-   * ckpt (thumos) : [Google Drive](https://drive.google.com/file/d/1SsaWPiaJfkTA-I4FSxKnmnLuIlOhpRux/view?usp=drive_link)
-   * ckpt (annet) : [Google Drive](https://drive.google.com/file/d/1SsaWPiaJfkTA-I4FSxKnmnLuIlOhpRux/view?usp=drive_link)
+   * ckpt (thumos) : [Google Drive](https://drive.google.com/file/d/1eQsucNql6e9dR1LKd1vyxJZ5-HCc-bcB/view?usp=sharing)
+   * ckpt (annet) : [Google Drive]()
 
 * The **checkpoint file**  should be organized as follows:
 ~~~~
