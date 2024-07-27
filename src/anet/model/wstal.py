@@ -65,7 +65,7 @@ class Similarity(nn.Module):
         dist = torch.mean(torch.mean(dist,dim=-1),dim=-1)
         return dist
 
-class PECR(torch.nn.Module):
+class PVLR(torch.nn.Module):
     def __init__(self, n_feature, n_class, actiondict, actiontoken, inp_actionlist, **args):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
