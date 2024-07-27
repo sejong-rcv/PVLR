@@ -143,7 +143,7 @@ if __name__ == '__main__':
       os.makedirs('./output/log/' + args.model_name)
 
    actionlist, actiondict, actiontoken = text_prompt(dataset=args.dataset_name, clipbackbone=args.backbone, device=device)
-   model = wstal.PECR(dataset.feature_size, dataset.num_class, actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
+   model = wstal.PVLR(dataset.feature_size, dataset.num_class, actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
 
    if args.pretrained_ckpt is not None:
       model.load_state_dict(torch.load(args.pretrained_ckpt))
