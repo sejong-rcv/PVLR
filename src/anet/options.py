@@ -1,11 +1,11 @@
 import argparse
 
-parser = argparse.ArgumentParser(description='CO2-NET')
+parser = argparse.ArgumentParser(description='PVLR')
 
 # Default Setting
 parser.add_argument('--path-dataset', type=str, default='features/ActivityNet1.3', help='the path of data feature')
 parser.add_argument('--path-clip-dataset', type=str, default='features/Anet_CLIP', help='the path of data feature')
-parser.add_argument('--model-name', default='weakloc', help='name to save model')
+parser.add_argument('--model-name', default='PVLR', help='name to save model')
 parser.add_argument('--pretrained-ckpt', default=None, help='ckpt for pretrained model')
 parser.add_argument('--dataset-name', default='ActivityNet1.3', help='dataset to train on (default: )')
 parser.add_argument('--feature-type', type=str, default='I3D', help='type of feature to be used I3D or UNT (default: I3D)')
@@ -31,13 +31,13 @@ parser.add_argument('--similar-size', type=int, default=2)
 
 # model
 parser.add_argument('--num-prob-v', type=int, default=20)
-parser.add_argument('--train-sig-T', type=float, default=4)
-parser.add_argument('--test-sig-T', type=float, default=0.003)
+parser.add_argument('--train-sig-T', type=float, default=1)
+parser.add_argument('--test-sig-T', type=float, default=0.01)
 # parser.add_argument('--sig-T-attn', type=float, default=1.0)
 parser.add_argument('--prefix', type=int, default=4)
 parser.add_argument('--postfix', type=int, default=4)
-parser.add_argument('--convex_alpha', type=float, default=0.6)
-parser.add_argument('--eps-std', type=float, default=0.005)
+parser.add_argument('--convex_alpha', type=float, default=0.4)
+parser.add_argument('--eps-std', type=float, default=0.05)
 parser.add_argument('--train_topk',type=float,default=5)
 parser.add_argument('--k_easy',type=int,default=3)
 parser.add_argument('--k_hard',type=int,default=3)
