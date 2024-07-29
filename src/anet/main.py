@@ -31,7 +31,7 @@ torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 def classes(cls):
    return cls.lower()
-meta = np.load("features/ActivityNet1.3/ActivityNet1.3-Annotations/classlist.npy", 'r')
+meta = np.load("../../data/annet/ActivityNet1.3/ActivityNet1.3-Annotations/classlist.npy", 'r')
 inp_actionlist = [classes(act) for act in meta]
 
 def setup_seed(seed):

@@ -22,7 +22,7 @@ def text_prompt(dataset='Thumos14reduced', clipbackbone='R50', device='cpu'):
         paramclip.requires_grad = False
 
 
-    meta = np.load("features/ActivityNet1.3/ActivityNet1.3-Annotations/classlist.npy", 'r')
+    meta = np.load("../../data/annet/ActivityNet1.3/ActivityNet1.3-Annotations/classlist.npy", 'r')
     actionlist = [classes(act) for act in meta]
 
     actionlist = np.array([a.split('\n')[0] for a in actionlist])

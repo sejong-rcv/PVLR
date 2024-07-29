@@ -49,6 +49,14 @@ def idx2multihot(id_list, num_class):
 
 
 def random_extract(feat, t_max):
+    # ind = np.arange(feat.shape[0])
+    # splits = np.array_split(ind, t_max)
+    # nind = np.array([np.random.choice(split, 1)[0] for split in splits])
+    # return feat[nind]
+
+    # ind = np.random.choice(feat.shape[0], size=t_max)
+    # ind = sorted(ind)
+    # return feat[ind]
     r = np.random.randint(len(feat) - t_max)
     return feat[r: r + t_max]
 
@@ -85,6 +93,7 @@ def process_feat(feat, length=None, normalize=False):
 def write_to_file(dname, dmap, cmap, itr):
     fid = open(dname + "-results.log", "a+")
     string_to_write = str(itr)
+    # if dmap:
     for item in dmap:
         string_to_write += " " + "%.2f" % item
     string_to_write += " " + "%.2f" % cmap
@@ -174,11 +183,12 @@ def nms(proposals, thresh):
 
         iou = inter / (areas[i] + areas[order[1:]] - inter)
 
-        inds = np.where(iou < thresh)[0] 
+        inds = np.where(iou < thresh)[0] #取出不重叠的
         order = order[inds + 1]
 
     return keep
 def get_proposal_oic(tList, wtcam, final_score, c_pred, _lambda=0.25, gamma=0.2):
+    # t_factor = (16 * v_len) / (scale * num_segments * sampling_frames)  #（24*N*25）
     temp = []
     for i in range(len(tList)):
         c_temp = []

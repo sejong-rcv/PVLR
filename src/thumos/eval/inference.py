@@ -20,7 +20,7 @@ import scipy.io as sio
 import multiprocessing as mp
 from tabulate import tabulate
 
-import dataset
+import wsad_dataset
 import options
 import model
 from model.prompt import text_prompt
@@ -135,7 +135,7 @@ if __name__ == '__main__':
        os.mkdir(os.path.join("output","log_inference",args.model_name))
     result_file = open(os.path.join("output","log_inference",args.model_name,'Performance.txt'),'w')
 
-    dataset = getattr(dataset, args.dataset)(args)
+    dataset = getattr(wsad_dataset, args.dataset)(args)
     actionlist, actiondict, actiontoken = text_prompt(dataset=args.dataset_name, clipbackbone=args.backbone, device=device)
     TSM = wstal.TSM(actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
 

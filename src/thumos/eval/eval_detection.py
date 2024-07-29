@@ -72,6 +72,9 @@ def moving_smooth(y,box_size):
     return y_smooth
 
 def gaussian_smooth(score,sigma=30):
+    # r = score.shape[0] //39
+    # if r%2==0:
+    #     r+=1
     r = 125
     if r > score.shape[0] // 2:
         r = score.shape[0] // 2 - 1
@@ -105,7 +108,7 @@ class ANETdetection(object):
         self.tiou_thresholds = tiou_thresholds
         self.verbose = verbose
         self.ap = None
-        self.annotation_path = 'features/Thumos14reduced-Annotations'
+        self.annotation_path = 'features/Thumos14reduced-Annotations'#os.path.join(args.path_dataset,annotation_path)
         self.prediction = None
         self._import_ground_truth(self.annotation_path)
 

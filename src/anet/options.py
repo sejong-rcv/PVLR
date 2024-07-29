@@ -3,8 +3,8 @@ import argparse
 parser = argparse.ArgumentParser(description='PVLR')
 
 # Default Setting
-parser.add_argument('--path-dataset', type=str, default='features/ActivityNet1.3', help='the path of data feature')
-parser.add_argument('--path-clip-dataset', type=str, default='features/Anet_CLIP', help='the path of data feature')
+parser.add_argument('--path-dataset', type=str, default='../../data/annet/ActivityNet1.3', help='the path of data feature')
+parser.add_argument('--path-clip-dataset', type=str, default='../../data/annet/Anet_CLIP', help='the path of data feature')
 parser.add_argument('--model-name', default='PVLR', help='name to save model')
 parser.add_argument('--pretrained-ckpt', default=None, help='ckpt for pretrained model')
 parser.add_argument('--dataset-name', default='ActivityNet1.3', help='dataset to train on (default: )')

@@ -16,7 +16,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 import options
-import dataset
+import wsad_dataset
 
 from model.prompt import text_prompt
 from model.loss import TotalLoss
@@ -79,7 +79,7 @@ def train(itr, dataset, args, model, optimizer, criterion, device):
    labels = torch.from_numpy(labels).float().to(device)
    clip_feature = torch.from_numpy(clip_feature).float().to(device)
    
-   outputs = model(features,clip_feature,itr=itr,split='train',device=device,opt=args)
+   outputs = model(features,clip_feature,itr=itr,split='train',device=device,opt=args) # TSM
 
    loss, loss_dict = criterion(itr, outputs, clip_feature, labels)
 
@@ -133,6 +133,7 @@ def test(itr, dataset, args, model, device):
    labels_stack = np.array(labels_stack)
    proposals = pd.concat(proposals).reset_index(drop=True)
    
+   #CVPR2020
    if 'Thumos14' in args.dataset_name:
       iou = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
       dmap_detect = ANETdetection(dataset.path_to_annotations, iou, args=args)
@@ -178,8 +179,14 @@ if __name__ == '__main__':
    with open(os.path.join(result_path, 'opts.json'), 'w') as j:
       json.dump(args_dict, j, indent=2)
 
+   # # Current code save
+   # tar = tarfile.open(os.path.join(result_path, 'sources.tar'), 'w')
+   # tar.add('main.py'); tar.add('train.py'); tar.add('test.py'); tar.add('model.py'); tar.add(f'experiments/{args.model_name}.sh')
+   # tar.add('options.py'); tar.add('prob_encoder.py'); tar.add('proposal_methods.py'); tar.add('wsad_dataset.py')
+   # tar.close()
+
    device = torch.device("cuda")
-   dataset = getattr(dataset, args.dataset)(args)
+   dataset = getattr(wsad_dataset, args.dataset)(args)
 
    if 'Thumos' in args.dataset_name:
       max_map=[0]*9
@@ -194,6 +201,11 @@ if __name__ == '__main__':
 
    save_dir = f'output/ckpt/{args.model_name}'
    actionlist, actiondict, actiontoken = text_prompt(dataset=args.dataset_name, clipbackbone=args.backbone, device=device)
+   """
+   actionlist: action 클래스 리스트
+   actiondict: 클래스별 임베딩 1, 77, 512
+   actiontoken: 클래스별 토큰 1, 77
+   """
    TSM = wstal.TSM(actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
 
    if args.pretrained_ckpt is not None:
@@ -205,6 +217,7 @@ if __name__ == '__main__':
          del previous_model[wt]
       TSM.load_state_dict(previous_model)
       print("Original ckpt loaded !!!")
+      # TSM.load_state_dict(torch.load(args.pretrained_ckpt))
 
    optimizer = optim.Adam([{"params": TSM.parameters()}], lr=args.lr, weight_decay=args.weight_decay)
    criterion = TotalLoss(args)
@@ -216,6 +229,12 @@ if __name__ == '__main__':
    for itr in tqdm(range(args.max_iter)):
       loss, loss_dict = train(itr, dataset, args, TSM ,optimizer, criterion, device)
       total_loss+=loss
+
+      # columns = [' ', 'cls_loss', 'norm_loss', 'guide_loss', 'contra_loss', 'distillation_loss', 'action_prob_contra_loss', 'background_prob_contra_loss', 'ortho_loss'] 
+      # performance = [itr, loss_dict['cls_loss'],loss_dict['norm_loss'],loss_dict['guide_loss'],loss_dict['contra_loss'],loss_dict['distillation_loss'],loss_dict['action_prob_contra_loss'],loss_dict['background_prob_contra_loss'],loss_dict['ortho_loss']]
+      # table = [performance]
+      # print(tabulate(table, headers=columns, numalign="center", stralign="center", tablefmt="simple", floatfmt='.2f'))
+      # print(tabulate(table, numalign="center", stralign="center", tablefmt="simple", floatfmt='.2f'), file=result_file, flush=True)
 
       if itr > args.warmup_iter and itr % args.interval == 0 and not itr == 0:  
          print('Iteration: %d, Loss: %.5f ' %(itr, total_loss/args.interval))
