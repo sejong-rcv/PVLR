@@ -1,12 +1,12 @@
 import argparse
 
-parser = argparse.ArgumentParser(description='TSM-NET')
+parser = argparse.ArgumentParser(description='PVLR')
 
 # Default Setting
-parser.add_argument('--path-dataset', type=str, default='path/to/Thumos14', help='the path of data feature')
-parser.add_argument('--path-clip-dataset', type=str, default='../clip_feature/clip_feature_RN50/mid', help='the path of data feature')
-parser.add_argument('--model-name', default='weakloc', help='name to save model')
-parser.add_argument('--pretrained-ckpt', default='./original.pth', help='ckpt for pretrained model')
+parser.add_argument('--path-dataset', type=str, default='../../data/thumos', help='the path of data feature')
+parser.add_argument('--path-clip-dataset', type=str, default='../../data/thumos/Thumos14_CLIP', help='the path of data feature')
+parser.add_argument('--model-name', default='PVLR', help='name to save model')
+parser.add_argument('--pretrained-ckpt', default='../../data/init_thumos.pth', help='ckpt for pretrained model')
 parser.add_argument('--dataset-name', default='Thumos14reduced', help='dataset to train on (default: )')
 parser.add_argument('--feature-type', type=str, default='I3D', help='type of feature to be used I3D or UNT (default: I3D)')
 parser.add_argument('--use-model',type=str, default='CO2', help='model used to train the network')

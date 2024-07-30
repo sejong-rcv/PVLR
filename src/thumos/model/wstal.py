@@ -15,7 +15,7 @@ class Attn(torch.nn.Module):
         self.tau = temperature
 
         self.AE_e = nn.Sequential(
-            nn.Conv1d(n_feature, embed_dim//2, 3, padding=1),nn.LeakyReLU(0.2),nn.Dropout(0.5)) # 1024 -> 512
+            nn.Conv1d(n_feature, embed_dim//2, 3, padding=1),nn.LeakyReLU(0.2),nn.Dropout(0.5)) 
         
         self.AE_d = nn.Sequential(
             nn.Conv1d(embed_dim//2, n_feature, 3, padding=1),nn.LeakyReLU(0.2),nn.Dropout(0.5))
@@ -32,12 +32,12 @@ class Attn(torch.nn.Module):
         self.channel_avg=nn.AdaptiveAvgPool1d(1)
 
     def forward(self,vfeat,ffeat): 
-        fusion_feat = self.AE_e(ffeat) # [10, 512, 320]
-        new_feat = self.AE_d(fusion_feat) # [10, 1024, 320]s
+        fusion_feat = self.AE_e(ffeat)
+        new_feat = self.AE_d(fusion_feat)
 
-        channelfeat = self.channel_avg(vfeat) # [10, 1024, 1], Temporal 평균
-        channel_attn = self.channel_conv(channelfeat) # b, 1024, 1 / visual feature로부터 channel attention 값 추출
-        channel_attn_norm = channel_attn/torch.norm(channel_attn,p=2,dim=1,keepdim=True) # normalize
+        channelfeat = self.channel_avg(vfeat)
+        channel_attn = self.channel_conv(channelfeat) 
+        channel_attn_norm = channel_attn/torch.norm(channel_attn,p=2,dim=1,keepdim=True)
 
         bit_wise_attn = self.bit_wise_attn(fusion_feat) # b, 1024, 320
         bit_wise_attn_norm = bit_wise_attn/torch.norm(bit_wise_attn,p=2,dim=1,keepdim=True)
@@ -55,7 +55,7 @@ class Similarity(nn.Module):
         self.sig_T_train = sig_T_train
         self.sig_T_infer = sig_T_infer
 
-    def forward(self, v_feat, t_feat, split): # [10, 320, 10, 2048], [21, 10, 2048]
+    def forward(self, v_feat, t_feat, split): 
         
         b, n, t, d = v_feat.shape
         t_feat = t_feat.unsqueeze(0).unsqueeze(0).repeat(b, n, 1, 1)
@@ -71,7 +71,7 @@ class Similarity(nn.Module):
         dist = torch.mean(torch.mean(dist,dim=-1),dim=-1)
         return dist
 
-class TSM(torch.nn.Module):
+class PVLR(torch.nn.Module):
     def __init__(self, actiondict, actiontoken, inp_actionlist,**args):
         super().__init__()
         embed_dim=2048
@@ -123,14 +123,14 @@ class TSM(torch.nn.Module):
         nn.init.normal_(self.embedding.weight, std=0.01)
 
     def replace_text_embedding(self, actionlist):
-        self.text_embedding = self.embedding(torch.arange(77).to(self.device))[None, :].repeat([len(actionlist)+1, 1, 1]) # [21, 77, 512]
-        self.prompt_actiontoken = torch.zeros(len(actionlist)+1, 77) # [21, 77]
+        self.text_embedding = self.embedding(torch.arange(77).to(self.device))[None, :].repeat([len(actionlist)+1, 1, 1]) 
+        self.prompt_actiontoken = torch.zeros(len(actionlist)+1, 77) 
         for i, a in enumerate(actionlist):
 
-            embedding = torch.from_numpy(self.actiondict[a][0]).float().to(self.device) # [77, 512]
+            embedding = torch.from_numpy(self.actiondict[a][0]).float().to(self.device) 
             token = torch.from_numpy(self.actiontoken[a][0])
 
-            self.text_embedding[i][0] = embedding[0] # [21, 77, 512]
+            self.text_embedding[i][0] = embedding[0] 
             ind = np.argmax(token, -1)
 
             self.text_embedding[i][self.prefix + 1: self.prefix + ind] = embedding[1:ind]
@@ -149,23 +149,22 @@ class TSM(torch.nn.Module):
         v_atn, vfeat, n_rfeat, o_rfeat = self.vAttn(feat[:,:1024,:],feat[:,1024:,:])
         f_atn, ffeat, n_ffeat, o_ffeat = self.fAttn(feat[:,1024:,:],feat[:,:1024,:])
 
-        # x_atn = (f_atn+v_atn)/2
         x_atn = args['opt'].convex_alpha*f_atn+(1-args['opt'].convex_alpha)*v_atn
 
         nfeat = torch.cat((vfeat,ffeat),1)
         
         nfeat_out0 = self.fusion(nfeat)
-        nfeat_out = self.fusion2(nfeat_out0) # b, 2048, T
+        nfeat_out = self.fusion2(nfeat_out0) 
 
         # Text embedding
         self.replace_text_embedding(self.inp_actionlist)
 
-        text_feature = self.clipmodel.encode_text(self.text_embedding, self.prompt_actiontoken) # [20, 77, dim], [20, 77] -> [20, dim]
+        text_feature = self.clipmodel.encode_text(self.text_embedding, self.prompt_actiontoken) 
         text_feature = text_feature.to(torch.float32) 
 
         ################# Probabilistic CAS #################
-        mu_v, emb_v, var_v = self.snippet_prob_encoder(itr, nfeat_out, self.P_v, split) # [10, 320, 2048], [10, 320, 10, 2048], [10, 320, 2048]
-        cas = self.matching_prob(emb_v, text_feature, split) # CAS [10, 320, 21] 
+        mu_v, emb_v, var_v = self.snippet_prob_encoder(itr, nfeat_out, self.P_v, split) 
+        cas = self.matching_prob(emb_v, text_feature, split)
     
         with torch.no_grad():
             reparm_sim = torch.einsum("bktd,btd->bkt",[torch.nn.functional.normalize(emb_v ,dim=-1), torch.nn.functional.normalize(mu_v, dim=-1)]).mean(dim=1)

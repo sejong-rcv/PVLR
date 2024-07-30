@@ -9,7 +9,7 @@ args = options.parser.parse_args()
 
 def filter_segments(segment_predict, vn):
 
-    ambilist = 'features/Thumos14reduced-Annotations/Ambiguous_test.txt'
+    ambilist = '../../data/thumos/Thumos14reduced-Annotations/Ambiguous_test.txt'
     try:
         ambilist = list(open(ambilist, "r"))
         ambilist = [a.strip("\n").split(" ") for a in ambilist]

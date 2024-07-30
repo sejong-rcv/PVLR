@@ -79,7 +79,7 @@ def train(itr, dataset, args, model, optimizer, criterion, device):
    labels = torch.from_numpy(labels).float().to(device)
    clip_feature = torch.from_numpy(clip_feature).float().to(device)
    
-   outputs = model(features,clip_feature,itr=itr,split='train',device=device,opt=args) # TSM
+   outputs = model(features,clip_feature,itr=itr,split='train',device=device,opt=args) # PVLR
 
    loss, loss_dict = criterion(itr, outputs, clip_feature, labels)
 
@@ -174,16 +174,11 @@ if __name__ == '__main__':
 
    result_path = f'output/log/{args.model_name}/'
    os.makedirs(result_path, exist_ok=True)
+   os.makedirs(os.path.join("output","results"), exist_ok=True)
    result_file = open(os.path.join(result_path, 'Performance.txt'),'w')
 
    with open(os.path.join(result_path, 'opts.json'), 'w') as j:
       json.dump(args_dict, j, indent=2)
-
-   # # Current code save
-   # tar = tarfile.open(os.path.join(result_path, 'sources.tar'), 'w')
-   # tar.add('main.py'); tar.add('train.py'); tar.add('test.py'); tar.add('model.py'); tar.add(f'experiments/{args.model_name}.sh')
-   # tar.add('options.py'); tar.add('prob_encoder.py'); tar.add('proposal_methods.py'); tar.add('wsad_dataset.py')
-   # tar.close()
 
    device = torch.device("cuda")
    dataset = getattr(wsad_dataset, args.dataset)(args)
@@ -201,12 +196,8 @@ if __name__ == '__main__':
 
    save_dir = f'output/ckpt/{args.model_name}'
    actionlist, actiondict, actiontoken = text_prompt(dataset=args.dataset_name, clipbackbone=args.backbone, device=device)
-   """
-   actionlist: action 클래스 리스트
-   actiondict: 클래스별 임베딩 1, 77, 512
-   actiontoken: 클래스별 토큰 1, 77
-   """
-   TSM = wstal.TSM(actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
+
+   PVLR = wstal.PVLR(actiondict=actiondict, actiontoken=actiontoken, inp_actionlist=inp_actionlist, opt=args).to(device)
 
    if args.pretrained_ckpt is not None:
       previous_model = torch.load(args.pretrained_ckpt)
@@ -215,11 +206,10 @@ if __name__ == '__main__':
              "text_prob_encoder.layer_norm.bias", "snippet_prob_encoder.layer_norm.weight", "snippet_prob_encoder.layer_norm.bias"]
       for wt in wts:
          del previous_model[wt]
-      TSM.load_state_dict(previous_model)
+      PVLR.load_state_dict(previous_model)
       print("Original ckpt loaded !!!")
-      # TSM.load_state_dict(torch.load(args.pretrained_ckpt))
 
-   optimizer = optim.Adam([{"params": TSM.parameters()}], lr=args.lr, weight_decay=args.weight_decay)
+   optimizer = optim.Adam([{"params": PVLR.parameters()}], lr=args.lr, weight_decay=args.weight_decay)
    criterion = TotalLoss(args)
 
    total_loss = 0
@@ -227,27 +217,21 @@ if __name__ == '__main__':
    best_performance = []
 
    for itr in tqdm(range(args.max_iter)):
-      loss, loss_dict = train(itr, dataset, args, TSM ,optimizer, criterion, device)
+      loss, loss_dict = train(itr, dataset, args, PVLR ,optimizer, criterion, device)
       total_loss+=loss
-
-      # columns = [' ', 'cls_loss', 'norm_loss', 'guide_loss', 'contra_loss', 'distillation_loss', 'action_prob_contra_loss', 'background_prob_contra_loss', 'ortho_loss'] 
-      # performance = [itr, loss_dict['cls_loss'],loss_dict['norm_loss'],loss_dict['guide_loss'],loss_dict['contra_loss'],loss_dict['distillation_loss'],loss_dict['action_prob_contra_loss'],loss_dict['background_prob_contra_loss'],loss_dict['ortho_loss']]
-      # table = [performance]
-      # print(tabulate(table, headers=columns, numalign="center", stralign="center", tablefmt="simple", floatfmt='.2f'))
-      # print(tabulate(table, numalign="center", stralign="center", tablefmt="simple", floatfmt='.2f'), file=result_file, flush=True)
 
       if itr > args.warmup_iter and itr % args.interval == 0 and not itr == 0:  
          print('Iteration: %d, Loss: %.5f ' %(itr, total_loss/args.interval))
          total_loss = 0
 
-         iou, dmap, dap = test(itr, dataset, args, TSM, device)
+         iou, dmap, dap = test(itr, dataset, args, PVLR, device)
          if 'Thumos' in args.dataset_name:
             cond=sum(dmap[0:7])>sum(max_map[0:7])
          else:
             cond=np.mean(dmap)>np.mean(max_map)
             
          if cond:
-            torch.save(TSM.state_dict(), f'output/ckpt/{args.model_name}/Best_model.pkl')
+            torch.save(PVLR.state_dict(), f'output/ckpt/{args.model_name}/Best_model.pkl')
             max_map = dmap
 
          columns = [' ', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.3:0.7', '0.1:0.7'] 

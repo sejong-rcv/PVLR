@@ -97,7 +97,7 @@ class ANETdetection(object):
 
     def __init__(
         self,
-        annotation_path='features/Thumos14reduced-Annotations',
+        annotation_path='../../data/thumos/Thumos14reduced-Annotations',
         tiou_thresholds=np.array([0.1, 0.3, 0.5]),
         args=None,
         subset="test",
@@ -108,7 +108,7 @@ class ANETdetection(object):
         self.tiou_thresholds = tiou_thresholds
         self.verbose = verbose
         self.ap = None
-        self.annotation_path = 'features/Thumos14reduced-Annotations'#os.path.join(args.path_dataset,annotation_path)
+        self.annotation_path = '../../data/thumos/Thumos14reduced-Annotations'#os.path.join(args.path_dataset,annotation_path)
         self.prediction = None
         self._import_ground_truth(self.annotation_path)
 

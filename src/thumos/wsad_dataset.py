@@ -41,8 +41,8 @@ class SampleDataset:
         self.sampling=sampling
         self.num_segments = args.max_seqlen
         self.feature_size = args.feature_size
-        self.path_to_features = os.path.join("features/Thumos14reduced/Thumos14reduced-I3D-JOINTFeatures.npy")
-        self.path_to_annotations = os.path.join("features/Thumos14reduced-Annotations/")
+        self.path_to_features = os.path.join("../../data/thumos/Thumos14reduced/Thumos14reduced-I3D-JOINTFeatures.npy")
+        self.path_to_annotations = os.path.join("../../data/thumos/Thumos14reduced-Annotations/")
         self.features = np.load(
             self.path_to_features, encoding="bytes", allow_pickle=True
         )
@@ -100,7 +100,7 @@ class SampleDataset:
         if mode == "rgb" or mode == "flow":
             self.feature_size = 1024
 
-        with open('features/Thumos14reduced/gt.json') as j:
+        with open('../../data/thumos/Thumos14reduced/gt.json') as j:
             self.anno = json.load(j)
         self.temp_label = self.get_temp_label()
         

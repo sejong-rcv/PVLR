@@ -28,7 +28,7 @@ class VideoLoss(torch.nn.Module):
         if lab_rand is not None:
             labels_with_back = torch.cat((labels, lab_rand), dim=-1)
         
-        topk_val, topk_ind = torch.topk(element_logits, k=max(1, int(element_logits.shape[-2] // rat)), dim=-2) # [10, 45, 21] 
+        topk_val, topk_ind = torch.topk(element_logits, k=max(1, int(element_logits.shape[-2] // rat)), dim=-2) 
         instance_logits = torch.mean(topk_val, dim=-2)
 
         labels_with_back = labels_with_back / (torch.sum(labels_with_back, dim=1, keepdim=True) + 1e-4)
@@ -54,20 +54,20 @@ class VideoLoss(torch.nn.Module):
         n_tmp = 0.
         _, n, c = element_logits.shape
         
-        for i in range(0, 3*2, 2): # 0, 2, 4 왜 이렇게 하드 코딩 되어 있는거지? num_similar, similar_size 이거랑 관련 있나?
+        for i in range(0, 3*2, 2): 
             atn1 = F.softmax(element_logits[i], dim=0) # 0, 2, 4
             atn2 = F.softmax(element_logits[i+1], dim=0) # 1, 3, 5
 
             n1 = torch.FloatTensor([np.maximum(n-1, 1)]).cuda()
             n2 = torch.FloatTensor([np.maximum(n-1, 1)]).cuda()
 
-            Hf1 = torch.mm(torch.transpose(x[i], 1, 0), atn1)                                                   # (n_feature, n_class)
+            Hf1 = torch.mm(torch.transpose(x[i], 1, 0), atn1)                                                 
             Hf2 = torch.mm(torch.transpose(x[i+1], 1, 0), atn2)
 
             Lf1 = torch.mm(torch.transpose(x[i], 1, 0), (1 - atn1)/n1)
             Lf2 = torch.mm(torch.transpose(x[i+1], 1, 0), (1 - atn2)/n2)
 
-            d1 = 1 - torch.sum(Hf1*Hf2, dim=0) / (torch.norm(Hf1, 2, dim=0) * torch.norm(Hf2, 2, dim=0))        # 1-similarity
+            d1 = 1 - torch.sum(Hf1*Hf2, dim=0) / (torch.norm(Hf1, 2, dim=0) * torch.norm(Hf2, 2, dim=0))      
             d2 = 1 - torch.sum(Hf1*Lf2, dim=0) / (torch.norm(Hf1, 2, dim=0) * torch.norm(Lf2, 2, dim=0))
             d3 = 1 - torch.sum(Hf2*Lf1, dim=0) / (torch.norm(Hf2, 2, dim=0) * torch.norm(Lf1, 2, dim=0))
             

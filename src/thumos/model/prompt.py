@@ -43,7 +43,7 @@ def text_prompt(dataset='Thumos14reduced', clipbackbone='R50', device='cpu'):
 
     # convert to token, will automatically padded to 77 with zeros
     if dataset == 'Thumos14reduced':
-        meta = np.load("features/Thumos14reduced-Annotations/classlist.npy", 'r')
+        meta = np.load("../../data/thumos/Thumos14reduced-Annotations/classlist.npy", 'r')
         actionlist = [classes[act.decode('utf-8')] for act in meta]
         actionlist = np.array([a.split('\n')[0] for a in actionlist])
         actiontoken = np.array([convert_to_token(a) for a in actionlist])
@@ -51,7 +51,7 @@ def text_prompt(dataset='Thumos14reduced', clipbackbone='R50', device='cpu'):
     # More datasets to be continued
     # query the vector from dictionary
     with torch.no_grad():
-        actionembed = clipmodel.encode_text_light(torch.tensor(actiontoken).to(device)) # [20, 1, 77, 512]
+        actionembed = clipmodel.encode_text_light(torch.tensor(actiontoken).to(device)) 
 
     actiondict = OrderedDict((actionlist[i], actionembed[i].cpu().data.numpy()) for i in range(numC[dataset]))
     actiontoken = OrderedDict((actionlist[i], actiontoken[i]) for i in range(numC[dataset]))
