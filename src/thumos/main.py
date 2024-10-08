@@ -201,11 +201,6 @@ if __name__ == '__main__':
 
    if args.pretrained_ckpt is not None:
       previous_model = torch.load(args.pretrained_ckpt)
-      wts = ["fc_clip.weight", "fc_clip.bias", "text_prob_encoder.fc_mean.weight", "text_prob_encoder.fc_mean.bias", \
-             "text_prob_encoder.fc_var.weight", "text_prob_encoder.fc_var.bias", "text_prob_encoder.layer_norm.weight", \
-             "text_prob_encoder.layer_norm.bias", "snippet_prob_encoder.layer_norm.weight", "snippet_prob_encoder.layer_norm.bias"]
-      for wt in wts:
-         del previous_model[wt]
       PVLR.load_state_dict(previous_model)
       print("Original ckpt loaded !!!")
 
